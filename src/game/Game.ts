@@ -513,22 +513,20 @@ export class Game {
 
     if (this.screen !== 'playing') return;
 
-    // Boss missile phase: type to destroy missiles
+    // Boss missile phase: missiles take priority, but fall through to regular enemies if no match
     if (this.boss?.alive && this.boss.phase === 'missile') {
-      const matching = this.missiles
+      const matchingMissile = this.missiles
         .filter((m) => m.matches(char))
         .sort((a, b) => b.y - a.y); // closest to bottom first
 
-      if (matching.length > 0) {
-        this.onMissileHit(matching[0], char);
+      if (matchingMissile.length > 0) {
+        this.onMissileHit(matchingMissile[0], char);
         return;
       }
-      // If no missile matches, fall through to miss
-      this.onMiss(char);
-      return;
+      // No missile matches — fall through to try regular enemies
     }
 
-    // Boss final phase: simultaneous key detection
+    // Boss final phase: simultaneous key detection (no fall-through, boss demands full attention)
     if (this.boss?.alive && this.boss.phase === 'final' && this.boss.finalPairActive) {
       const pair = this.boss.currentPair;
       if (pair) {
@@ -572,8 +570,8 @@ export class Game {
       }
     }
 
-    // During boss entrance, ignore input
-    if (this.boss?.alive && (this.boss.phase === 'entrance' || (this.boss.phase === 'final' && !this.boss.finalPairActive))) {
+    // During final phase delay, block input (boss demands attention)
+    if (this.boss?.alive && this.boss.phase === 'final' && !this.boss.finalPairActive) {
       return;
     }
 
