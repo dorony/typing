@@ -35,8 +35,14 @@ export class DifficultyScaler {
 
   /** Get speed multiplier based on difficulty setting and player performance */
   getSpeedMultiplier(settings: GameSettings, recentAccuracy: number): number {
-    const base =
-      settings.difficulty === 'easy' ? 0.7 : settings.difficulty === 'hard' ? 1.3 : 1.0;
+    const bases: Record<string, number> = {
+      easy: 0.7,
+      normal: 1.0,
+      hard: 1.3,
+      'very-hard': 1.6,
+      master: 2.0,
+    };
+    const base = bases[settings.difficulty] ?? 1.0;
 
     // Slightly adjust based on how well player is doing
     // If accuracy > 90%, speed up a bit; if < 60%, slow down
@@ -47,13 +53,13 @@ export class DifficultyScaler {
 
   /** Get spawn interval multiplier */
   getSpawnMultiplier(settings: GameSettings): number {
-    switch (settings.difficulty) {
-      case 'easy':
-        return 1.4;
-      case 'hard':
-        return 0.75;
-      default:
-        return 1.0;
-    }
+    const multipliers: Record<string, number> = {
+      easy: 1.4,
+      normal: 1.0,
+      hard: 0.75,
+      'very-hard': 0.55,
+      master: 0.4,
+    };
+    return multipliers[settings.difficulty] ?? 1.0;
   }
 }

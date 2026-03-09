@@ -42,7 +42,7 @@ export interface PlayerProfileData {
 export interface GameSettings {
   soundEnabled: boolean;
   keyboardHintEnabled: boolean;
-  difficulty: 'easy' | 'normal' | 'hard';
+  difficulty: 'easy' | 'normal' | 'hard' | 'very-hard' | 'master';
 }
 
 export interface ActivePowerUp {

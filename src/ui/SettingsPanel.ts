@@ -40,10 +40,12 @@ export class SettingsPanel {
         </div>
         <div class="setting-row">
           <span class="setting-label">📊 רמת קושי</span>
-          <div style="display:flex;gap:0.5rem">
-            <button class="menu-btn ${this.settings.difficulty === 'easy' ? 'primary' : ''}" data-diff="easy" style="padding:0.5rem 1rem;min-width:auto;font-size:1rem">קל</button>
-            <button class="menu-btn ${this.settings.difficulty === 'normal' ? 'primary' : ''}" data-diff="normal" style="padding:0.5rem 1rem;min-width:auto;font-size:1rem">רגיל</button>
-            <button class="menu-btn ${this.settings.difficulty === 'hard' ? 'primary' : ''}" data-diff="hard" style="padding:0.5rem 1rem;min-width:auto;font-size:1rem">קשה</button>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+            <button class="menu-btn ${this.settings.difficulty === 'easy' ? 'primary' : ''}" data-diff="easy" style="padding:0.4rem 0.8rem;min-width:auto;font-size:0.9rem">קל</button>
+            <button class="menu-btn ${this.settings.difficulty === 'normal' ? 'primary' : ''}" data-diff="normal" style="padding:0.4rem 0.8rem;min-width:auto;font-size:0.9rem">רגיל</button>
+            <button class="menu-btn ${this.settings.difficulty === 'hard' ? 'primary' : ''}" data-diff="hard" style="padding:0.4rem 0.8rem;min-width:auto;font-size:0.9rem">קשה</button>
+            <button class="menu-btn ${this.settings.difficulty === 'very-hard' ? 'primary' : ''}" data-diff="very-hard" style="padding:0.4rem 0.8rem;min-width:auto;font-size:0.9rem">קשה מאוד</button>
+            <button class="menu-btn ${this.settings.difficulty === 'master' ? 'primary' : ''}" data-diff="master" style="padding:0.4rem 0.8rem;min-width:auto;font-size:0.9rem">מאסטר</button>
           </div>
         </div>
       </div>
