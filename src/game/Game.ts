@@ -948,7 +948,7 @@ export class Game {
       expected.add(this.lockedEnemy.nextChar);
     } else {
       for (const enemy of this.enemies) {
-        if (enemy.alive) expected.add(enemy.nextChar);
+        if (enemy.alive && enemy.y > enemy.radius) expected.add(enemy.nextChar);
       }
     }
 
