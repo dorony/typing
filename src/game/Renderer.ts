@@ -228,12 +228,14 @@ export class Renderer {
     const font = this.fontReady ? 'Varela Round' : 'sans-serif';
 
     if (boss.phase === 'missile') {
-      // Show boss word and "!טילים" label
+      // Show missile progress counter
+      const dealt = boss.missilesDealtWith;
+      const total = boss.missileLetters.length;
       ctx.font = `bold 28px "${font}"`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(boss.text, boss.x, boss.y);
+      ctx.fillText(`${dealt} / ${total}`, boss.x, boss.y);
 
       ctx.font = `bold 14px "${font}"`;
       ctx.fillStyle = '#ff6666';
@@ -341,7 +343,13 @@ export class Renderer {
     ctx.restore();
   }
 
-  drawBossFinalPair(boss: Boss, pair: [string, string], firstPressed: string | null): void {
+  drawBossFinalPair(
+    boss: Boss,
+    pair: [string, string],
+    firstPressed: string | null,
+    timeRemaining: number = 4,
+    totalTime: number = 4,
+  ): void {
     const ctx = this.ctx;
     ctx.save();
 
@@ -370,6 +378,34 @@ export class Renderer {
 
       ctx.lineWidth = 3;
       ctx.fill();
+      ctx.stroke();
+
+      // Countdown arc
+      const fraction = Math.max(0, Math.min(1, timeRemaining / totalTime));
+      const arcRadius = circleRadius + 6;
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + fraction * Math.PI * 2;
+
+      // Color: green → yellow → red
+      let r: number, g: number;
+      if (fraction > 0.5) {
+        // green to yellow
+        const t = (fraction - 0.5) * 2;
+        r = Math.round(255 * (1 - t));
+        g = 255;
+      } else {
+        // yellow to red
+        const t = fraction * 2;
+        r = 255;
+        g = Math.round(255 * t);
+      }
+      const arcColor = `rgb(${r}, ${g}, 68)`;
+
+      ctx.beginPath();
+      ctx.arc(cx, centerY, arcRadius, startAngle, endAngle);
+      ctx.strokeStyle = arcColor;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
       ctx.stroke();
 
       // Letter

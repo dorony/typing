@@ -383,10 +383,11 @@ export class Game {
       // Boss fires missiles
       if (this.boss.shouldFireMissile()) {
         const letter = this.boss.fireNextMissile();
+        const missileSpeed = Math.max(120, this.levelConfig.baseSpeed * 2.5) + Math.random() * 40;
         const missile = new Missile(
           this.boss.x + (Math.random() - 0.5) * 40,
           this.boss.y + this.boss.radius * 0.5,
-          80 + Math.random() * 40,
+          missileSpeed,
           letter,
         );
         this.missiles.push(missile);
@@ -437,6 +438,21 @@ export class Game {
         this.firstPressedKey = null;
         this.onMiss(this.firstPressedKey ?? '');
         this.addFloatingText('!מהר יותר', this.renderer.width / 2, this.renderer.height / 2, '#ff8844', 28);
+      }
+    }
+
+    // Final pair deadline expired — lose a life
+    if (this.boss && this.boss.phase === 'final' && this.boss.finalPairActive && this.boss.isFinalPairExpired) {
+      this.firstPressedKey = null;
+      this.onMiss('');
+      this.lives--;
+      this.sound.loseLife();
+      this.addFloatingText('!הזמן נגמר', this.renderer.width / 2, this.renderer.height / 2, '#ff4444', 28);
+
+      if (this.lives <= 0) {
+        this.onGameOver();
+      } else {
+        this.boss.advanceFinalPair();
       }
     }
 
@@ -500,7 +516,8 @@ export class Game {
       if (this.boss.phase === 'final' && this.boss.finalPairActive) {
         const pair = this.boss.currentPair;
         if (pair) {
-          this.renderer.drawBossFinalPair(this.boss, pair, this.firstPressedKey);
+          const timeRemaining = Math.max(0, this.boss.finalPairDeadline - this.boss.finalPairElapsed);
+          this.renderer.drawBossFinalPair(this.boss, pair, this.firstPressedKey, timeRemaining, this.boss.finalPairDeadline);
         }
       }
     }
@@ -675,6 +692,7 @@ export class Game {
     this.checkComboMilestone();
 
     missile.destroy();
+    if (this.boss) this.boss.missilesDealtWith++;
     this.particles.emit(missile.x, missile.y, '#ff6644', 12);
 
     const points = 15 + Math.floor(this.combo * 2);
@@ -709,6 +727,7 @@ export class Game {
 
   private onMissileReachedBottom(missile: Missile): void {
     missile.destroy();
+    if (this.boss) this.boss.missilesDealtWith++;
 
     // Shield power-up absorbs the hit
     if (this.activePowerUp?.type === 'shield') {
@@ -811,7 +830,24 @@ export class Game {
     this.missiles = [];
     this.firstPressedKey = null;
     this.boss = new Boss(this.renderer.width);
-    this.boss.init(this.levelConfig.bossWord, this.levelConfig.letters);
+
+    // Scale boss difficulty with level
+    const missileFireInterval = Math.max(0.5, 1.2 - (this.level / 150) * 0.6);
+    const extraCount = Math.ceil(this.levelConfig.bossWord.length * 0.75);
+    const extraMissileLetters: string[] = [];
+    for (let i = 0; i < extraCount; i++) {
+      const pool = this.levelConfig.letters;
+      extraMissileLetters.push(pool[Math.floor(Math.random() * pool.length)]);
+    }
+    const finalPairDeadline = Math.max(2.0, 4.0 - (this.level / 150) * 1.5);
+
+    this.boss.init(
+      this.levelConfig.bossWord,
+      this.levelConfig.letters,
+      missileFireInterval,
+      extraMissileLetters,
+      finalPairDeadline,
+    );
     this.sound.bossAppear();
     this.addFloatingText('!BOSS', this.renderer.width / 2, this.renderer.height / 2, '#ff3333', 48);
   }

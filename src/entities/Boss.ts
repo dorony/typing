@@ -21,6 +21,7 @@ export class Boss {
   // Missile phase
   missileLetters: string[] = [];
   missileFiredCount: number = 0;
+  missilesDealtWith: number = 0;
   missileFireTimer: number = 0;
   missileFireInterval: number = 1.5;
 
@@ -30,6 +31,8 @@ export class Boss {
   finalPairActive: boolean = false;
   finalPairTimer: number = 0;
   finalPairShowDelay: number = 1.0;
+  finalPairDeadline: number = 4.0;
+  finalPairElapsed: number = 0;
 
   constructor(canvasWidth: number) {
     this.x = canvasWidth / 2;
@@ -39,7 +42,13 @@ export class Boss {
     this.radius = 60;
   }
 
-  init(word: string, levelLetters: string[]): void {
+  init(
+    word: string,
+    levelLetters: string[],
+    missileFireInterval: number = 1.5,
+    extraMissileLetters: string[] = [],
+    finalPairDeadline: number = 4.0,
+  ): void {
     this.text = word;
     this.alive = true;
     this.opacity = 1;
@@ -50,10 +59,18 @@ export class Boss {
     // Phase init
     this.phase = 'entrance';
 
-    // Missile phase: entire boss word becomes missiles
-    this.missileLetters = word.split('');
+    // Missile phase: boss word letters + extra letters, shuffled together
+    const allLetters = [...word.split(''), ...extraMissileLetters];
+    // Shuffle extra missiles into the mix (Fisher-Yates)
+    for (let i = allLetters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allLetters[i], allLetters[j]] = [allLetters[j], allLetters[i]];
+    }
+    this.missileLetters = allLetters;
     this.missileFiredCount = 0;
+    this.missilesDealtWith = 0;
     this.missileFireTimer = 0;
+    this.missileFireInterval = missileFireInterval;
 
     // Final phase: generate 3 pairs from levelLetters (no duplicates within pair)
     this.finalPairs = [];
@@ -65,6 +82,8 @@ export class Boss {
     this.finalPairIndex = 0;
     this.finalPairActive = false;
     this.finalPairTimer = 0;
+    this.finalPairDeadline = finalPairDeadline;
+    this.finalPairElapsed = 0;
   }
 
   private pickPair(pool: string[]): [string, string] {
@@ -113,7 +132,13 @@ export class Boss {
       this.finalPairTimer += dt;
       if (this.finalPairTimer >= this.finalPairShowDelay) {
         this.finalPairActive = true;
+        this.finalPairElapsed = 0;
       }
+    }
+
+    // Final pair deadline countdown
+    if (this.phase === 'final' && this.finalPairActive) {
+      this.finalPairElapsed += dt;
     }
   }
 
@@ -151,6 +176,10 @@ export class Boss {
     return this.finalPairs[this.finalPairIndex];
   }
 
+  get isFinalPairExpired(): boolean {
+    return this.finalPairElapsed >= this.finalPairDeadline;
+  }
+
   /** Advance to next final pair. Returns true if boss is defeated. */
   advanceFinalPair(): boolean {
     this.finalPairIndex++;
@@ -161,6 +190,7 @@ export class Boss {
     }
     this.finalPairActive = false;
     this.finalPairTimer = 0;
+    this.finalPairElapsed = 0;
     return false;
   }
 
