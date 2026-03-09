@@ -90,7 +90,12 @@ export class Boss {
 
     if (this.phase === 'defeated') {
       this.destroyTimer += dt;
-      this.opacity = Math.max(0, 1 - this.destroyTimer / 0.5);
+      // Hold visible for 1.5s of explosions, then fade out over 0.5s
+      if (this.destroyTimer < 1.5) {
+        this.opacity = 1;
+      } else {
+        this.opacity = Math.max(0, 1 - (this.destroyTimer - 1.5) / 0.5);
+      }
       return;
     }
 
@@ -160,7 +165,13 @@ export class Boss {
   }
 
   get isFullyDead(): boolean {
-    return this.phase === 'defeated' && this.destroyTimer > 0.5;
+    return this.phase === 'defeated' && this.destroyTimer > 2.0;
+  }
+
+  /** Progress of the explosion sequence (0-1) during defeated phase */
+  get explosionProgress(): number {
+    if (this.phase !== 'defeated') return 0;
+    return Math.min(1, this.destroyTimer / 1.5);
   }
 
   /** Health as fraction for the final phase (3 segments) */

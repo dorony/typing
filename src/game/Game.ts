@@ -397,6 +397,22 @@ export class Game {
       if (this.boss.phase === 'missile' && this.boss.allMissilesFired && this.missiles.length === 0) {
         this.boss.startFinalPhase();
       }
+
+      // Emit particle bursts during boss explosion
+      if (this.boss.phase === 'defeated' && this.boss.destroyTimer < 1.5) {
+        // Staggered particle bursts
+        const t = this.boss.destroyTimer;
+        const burstInterval = 0.15;
+        const prevBurst = Math.floor((t - dt) / burstInterval);
+        const curBurst = Math.floor(t / burstInterval);
+        if (curBurst > prevBurst) {
+          const ox = (Math.random() - 0.5) * this.boss.radius * 1.2;
+          const oy = (Math.random() - 0.5) * this.boss.radius * 0.8;
+          const colors = ['#ff3333', '#ff8833', '#ffd700', '#ffffff'];
+          const color = colors[curBurst % colors.length];
+          this.particles.emit(this.boss.x + ox, this.boss.y + oy, color, 15);
+        }
+      }
     }
 
     // Update missiles

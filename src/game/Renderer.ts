@@ -174,7 +174,21 @@ export class Renderer {
   drawBoss(boss: Boss): void {
     const ctx = this.ctx;
     ctx.save();
+
+    // Screen shake during explosion
+    if (boss.phase === 'defeated' && boss.explosionProgress < 1) {
+      const intensity = (1 - boss.explosionProgress) * 8;
+      const shakeX = (Math.random() - 0.5) * intensity;
+      const shakeY = (Math.random() - 0.5) * intensity;
+      ctx.translate(shakeX, shakeY);
+    }
+
     ctx.globalAlpha = boss.opacity;
+
+    // Draw explosion effects behind the ship during defeated phase
+    if (boss.phase === 'defeated') {
+      this.drawBossExplosion(boss);
+    }
 
     // Glow
     ctx.shadowColor = '#ff3333';
@@ -379,6 +393,75 @@ export class Renderer {
     ctx.fillText('!לחצו על שתי האותיות', boss.x, centerY + circleRadius + 25);
 
     ctx.restore();
+  }
+
+  private drawBossExplosion(boss: Boss): void {
+    const ctx = this.ctx;
+    const p = boss.explosionProgress;
+    const t = boss.destroyTimer;
+
+    // Multiple fireballs at staggered times across the boss body
+    const blasts = [
+      { delay: 0.0,  ox: 0,    oy: 0,    size: 1.0 },
+      { delay: 0.15, ox: -0.5, oy: -0.3, size: 0.7 },
+      { delay: 0.25, ox: 0.4,  oy: 0.2,  size: 0.8 },
+      { delay: 0.4,  ox: -0.3, oy: 0.4,  size: 0.6 },
+      { delay: 0.5,  ox: 0.6,  oy: -0.4, size: 0.7 },
+      { delay: 0.65, ox: -0.7, oy: 0.1,  size: 0.65 },
+      { delay: 0.75, ox: 0.2,  oy: -0.5, size: 0.75 },
+      { delay: 0.9,  ox: -0.1, oy: 0.3,  size: 0.6 },
+      { delay: 1.0,  ox: 0.5,  oy: 0.5,  size: 0.5 },
+      { delay: 1.1,  ox: 0,    oy: 0,    size: 1.3 },  // final big blast
+    ];
+
+    for (const blast of blasts) {
+      const elapsed = t - blast.delay;
+      if (elapsed < 0) continue;
+
+      const blastProgress = Math.min(1, elapsed / 0.4);
+      const bx = boss.x + blast.ox * boss.radius;
+      const by = boss.y + blast.oy * boss.radius;
+      const maxR = boss.radius * 0.6 * blast.size;
+      const r = maxR * blastProgress;
+      const alpha = (1 - blastProgress) * 0.9;
+
+      // Outer fireball
+      const grad = ctx.createRadialGradient(bx, by, 0, bx, by, r);
+      grad.addColorStop(0, `rgba(255, 255, 200, ${alpha})`);
+      grad.addColorStop(0.3, `rgba(255, 180, 50, ${alpha * 0.8})`);
+      grad.addColorStop(0.6, `rgba(255, 80, 20, ${alpha * 0.5})`);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bright core flash
+      if (blastProgress < 0.3) {
+        const coreAlpha = (1 - blastProgress / 0.3) * 0.8;
+        const coreR = r * 0.4;
+        const coreGrad = ctx.createRadialGradient(bx, by, 0, bx, by, coreR);
+        coreGrad.addColorStop(0, `rgba(255, 255, 255, ${coreAlpha})`);
+        coreGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = coreGrad;
+        ctx.beginPath();
+        ctx.arc(bx, by, coreR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Screen flash at the very start
+    if (t < 0.15) {
+      ctx.fillStyle = `rgba(255, 200, 100, ${(1 - t / 0.15) * 0.3})`;
+      ctx.fillRect(-this.width, -this.height, this.width * 3, this.height * 3);
+    }
+
+    // Final flash at the end
+    if (t > 1.3 && t < 1.5) {
+      const flashP = (t - 1.3) / 0.2;
+      ctx.fillStyle = `rgba(255, 255, 255, ${(1 - flashP) * 0.4})`;
+      ctx.fillRect(-this.width, -this.height, this.width * 3, this.height * 3);
+    }
   }
 
   private drawWordText(
